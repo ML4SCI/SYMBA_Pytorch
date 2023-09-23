@@ -1,4 +1,4 @@
-# Symba_torch
+# SYMBA_Pytorch
 
 This is the repository for my Google Summer of Code Project [Symbolic empirical representation of squared amplitudes in high-energy physics](https://summerofcode.withgoogle.com/programs/2023/projects/DLza6brS) 
 
