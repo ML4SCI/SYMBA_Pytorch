@@ -3,17 +3,17 @@ import numpy as np
 import torch
 import torch.nn as nn
 import pandas as pd
-from datasets.utils import create_csv_json
+from datasets.utils import create_csv_json, create_vocab
 import torchtext
 from torchtext.data import get_tokenizer
-from transformers import BartTokenizer
+from transformers import AutoTokenizer
 from torchtext.vocab import build_vocab_from_iterator
 from typing import Iterable, List
 
 # Define special symbols and indices
 BOS_IDX, PAD_IDX, EOS_IDX, UNK_IDX = 0, 1, 2, 3
 # Make sure the tokens are in order of their indices to properly insert them in vocab
-special_symbols = ['<s>', '<pad>', '</s>', 'unk'] 
+special_symbols = ['<s>', '<pad>', '</s>', '<unk>'] 
 
 class Transform:
     def __init__(self, df, config):
@@ -109,14 +109,31 @@ class Dataset(nn.Module):
     @staticmethod
     def get_dataset_from_config(config):
         dataset_name = config.dataset_name
+        tokenizer_path = ""
         
         if not Dataset.is_valid_dataset_name(dataset_name):
             raise ValueError('Invalid dataset: {}'.format(model_name))
             
         if config.tokenizer_type == "seq2seq":
             trns_form = get_transform(config)
-        else:
-            trns_form = BartTokenizer.from_pretrained(f'facebook/{config.model_name}')
+            
+        elif config.model_name in ['bart-base', 'bart-large']:
+            if config.pretrained_tokenizer:
+                trns_form = AutoTokenizer.from_pretrained(f'facebook/{config.model_name}')
+            else:
+                vocab_file = 'data/'+config.dataset_name+'/'+config.model_name+"_tokenizer"
+                if not os.path.exists(vocab_file):
+                    create_vocab(config)
+                trns_form = AutoTokenizer.from_pretrained(vocab_file)
+                
+        elif config.model_name in ['LED-base', 'LED-large']:
+            if config.pretrained_tokenizer:
+                trns_form = AutoTokenizer.from_pretrained("allenai/led-base-16384")
+            else:
+                vocab_file = 'data/'+config.dataset_name+'/'+config.model_name+"_tokenizer"
+                if not os.path.exists(vocab_file):
+                    create_vocab(config)
+                trns_form = AutoTokenizer.from_pretrained(vocab_file)
             
         train_dataset = Dataset('train', config, trns_form)
         val_dataset = Dataset('val', config, trns_form)
