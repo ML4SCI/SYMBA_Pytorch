@@ -14,7 +14,7 @@ pip install transformers
 ```
 After installing the required packages, clone this repository:
 ```bash
-git clone https://github.com/neerajanand321/Symba_torch.git
+git clone https://github.com/ML4SCI/SYMBA_Pytorch.git
 ```
 ### Training 
 Training can be done either using terminal or notebook.
@@ -30,4 +30,4 @@ torchrun symba_trainer.py --experiment_name="Example" --model_name="seq2seq_tran
                           --dataset_name="QCD_Amplitude" --distributed=True --epochs=30 --learning_rate=0.0001 
 ```
 #### Using Notebook
-Refer to the [symba_example.ipynb](https://github.com/neerajanand321/Symba_torch/blob/main/symba_example.ipynb).
+Refer to the [symba_example.ipynb](https://github.com/ML4SCI/SYMBA_Pytorch/blob/main/symba_example.ipynb).
