@@ -2,15 +2,17 @@ import random
 import os
 import re
 import pandas as pd
+import csv
+from transformers import AutoTokenizer
 
 def preprocess(data, is_square=False, is_fynman=False):
     '''Used to preprocess the amplitude and squared amplitude text'''
     
     if is_square:
-        for r in (('*', '*'), (',', ' , '), ('*(', ' *( ') , ('([', '[ '), ('])', ' ]'), ('[', '[ '),
-                  (']', ' ]'), ('[ start ]', '[start]'), ('[ end ]', '[end]'), (' - ', ' -'),
+        for r in (('*', '*'), (',', ' , '), ('*(', ' *( ') , ('([', '[ '), ('])', ' ]'), ('[', '[ '), 
+                  (']', ' ]'), ('[ start ]', '[start]'), ('[ end ]', '[end]'), (' - ', ' -'), 
                   (' + ',' +' ) ,('/', ' / ') ,('  ', ' ')) :
-            data = data.replace(*r)
+            data = data.replace(*r) 
         data = re.sub(r"\*(s_\d+\*s_\d+)", r"* \1", data)
         data = re.sub(r"\*(s_\d+\^\d+\*s_\d+)", r"* \1", data)
         data = re.sub(r"\*(m_\w+\^\d+\*s_\d+)", r"* \1", data)
@@ -20,18 +22,18 @@ def preprocess(data, is_square=False, is_fynman=False):
         return data
     
     elif is_fynman:
-        for r in (('(', '('), (')', ')'), ('  ', ' '), (' e(', 'e(m_e,-1,' ),(' mu(', 'mu(m_mu,-1,'),
+        for r in (('(', '('), (')', ')'), ('  ', ' '), (' e(', 'e(m_e,-1,' ),(' mu(', 'mu(m_mu,-1,'), 
                   (' u(', ' u(m_u,2/3,'), (' d(', 'd(m_d,-1/3,'), (' t(', ' t(m_t,-1,') ,(' s(', 's(m_s,-1/3,'),
-                  (' tt(', ' tt(m_tt,-1,'), (' c(', 'c(m_c,2/3,'),(' b(', 'b(m_b,-1/3,'), ('Anti ', 'Anti,'),
-                  ('Off ', 'Off,'), ('  ', ' ')):
-            data = data.replace(*r)
+                  (' tt(', ' tt(m_tt,-1,'), (' c(', 'c(m_c,2/3,'),(' b(', 'b(m_b,-1/3,'), ('Anti ', 'Anti,'), 
+                  ('Off ', 'Off,'), ('  ', ' ')): 
+            data = data.replace(*r) 
         
         return data
 
     else:
         for r in (('}', '}'),('{', ' {'), (' + ',' +' ), (' - ', ' -') ,('*', '* '), ('(* )', '(*)'),
-                  ('^', '^') , ('(', ' ('),(')', ')'),('/', ' /')  ,('  ', ' ') ) :
-            data = data.replace(*r)
+                  ('^', '^') , ('(', ' ('),(')', ')'),('/', ' /')  ,('  ', ' ') ) : 
+            data = data.replace(*r) 
         
         return data
 
@@ -126,4 +128,31 @@ def create_csv_json(path):
 
 
     print("==> CSV and JSON files created.\n")
+    
+# Train and save config for BART and LED model
+def create_vocab(config): 
+    amplitude_expressions = []
+    squared_amplitude_expressions = []
+    
+    path = "./data/"+config.dataset_name+'/train.csv'
+    
+    with open(path, 'r') as csvfile:
+        reader = csv.reader(csvfile)
+        for row in reader:
+            if row[0] == "Amplitude":
+                continue
+            if len(row) == 2:
+                amplitude_expressions.append(row[0])
+                squared_amplitude_expressions.append(row[1])
+                
+    all_expressions = amplitude_expressions + squared_amplitude_expressions
+    
+    model_name = config.model_name
+    help_dict = {'bart-base':'facebook/bart-base', 'bart-large':'facebook/bart-large', 'LED-base':'allenai/led-base-16384'}
+    old_tokenizer = AutoTokenizer.from_pretrained(help_dict[model_name])
+    
+    print(f"==> Training the tokenizer on {config.dataset_name}\n"}
+    tokenizer = old_tokenizer.train_new_from_iterator(all_expressions, config.vocab_size)
+    tokenizer.save_pretrained("./data/"+config.dataset_name+f"/{model_name}_tokenizer")
+    print("==> New Tokenizer Created\n"}
     

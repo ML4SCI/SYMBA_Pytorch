@@ -1,6 +1,6 @@
-from models import seq2seq_transformer, BART
+from models import seq2seq_transformer, BART, LED
 
-registered_models = [seq2seq_transformer.Model, BART.Model]
+registered_models = [seq2seq_transformer.Model, BART.Model, LED.Model]
 
 def get_model_from_config(config):
     model_name = config.model_name
